@@ -20,6 +20,13 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+import java.util.Arrays;
+
+
+//message WithdrawBalanceContract {
+//        bytes owner_address = 1;
+//        }
+
 @Slf4j
 public class WithdrawBalanceActuator extends AbstractActuator {
 

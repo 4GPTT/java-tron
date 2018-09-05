@@ -18,6 +18,14 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+import java.util.Arrays;
+
+//message TransferContract {
+//        bytes owner_address = 1;
+//        bytes to_address = 2;
+//        int64 amount = 3;
+//        }
+
 @Slf4j
 public class TransferActuator extends AbstractActuator {
 

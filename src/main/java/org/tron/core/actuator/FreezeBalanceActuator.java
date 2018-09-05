@@ -16,6 +16,14 @@ import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message FreezeBalanceContract {
+//        bytes owner_address = 1;
+//        int64 frozen_balance = 2;
+//        int64 frozen_duration = 3;
+//
+//        ResourceCode resource = 10;
+//        }
+
 @Slf4j
 public class FreezeBalanceActuator extends AbstractActuator {
 

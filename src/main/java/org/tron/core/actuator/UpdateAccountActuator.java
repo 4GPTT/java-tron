@@ -15,6 +15,11 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message AccountUpdateContract {
+//        bytes account_name = 1;
+//        bytes owner_address = 2;
+//        }
+
 @Slf4j
 public class UpdateAccountActuator extends AbstractActuator {
 

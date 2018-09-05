@@ -14,6 +14,24 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message WitnessUpdateContract {
+//        bytes owner_address = 1;
+//        bytes update_url = 12;
+//        }
+//
+//
+//message Witness {
+//        bytes address = 1;
+//        int64 voteCount = 2;
+//        bytes pubKey = 3;
+//        string url = 4;
+//        int64 totalProduced = 5;
+//        int64 totalMissed = 6;
+//        int64 latestBlockNum = 7;
+//        int64 latestSlotNum = 8;
+//        bool isJobs = 9;
+//        }
+
 @Slf4j
 public class WitnessUpdateActuator extends AbstractActuator {
 

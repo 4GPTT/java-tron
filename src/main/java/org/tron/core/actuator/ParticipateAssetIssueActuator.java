@@ -18,7 +18,6 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -33,6 +32,14 @@ import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+import java.util.Arrays;
+
+//message ParticipateAssetIssueContract {
+//        bytes owner_address = 1;
+//        bytes to_address = 2;
+//        bytes asset_name = 3; // the namekey of target asset, include name and order
+//        int64 amount = 4; // the amount of drops
+//        }
 
 @Slf4j
 public class ParticipateAssetIssueActuator extends AbstractActuator {

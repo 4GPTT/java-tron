@@ -17,6 +17,14 @@ import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message UpdateAssetContract {
+//        bytes owner_address = 1;
+//        bytes description = 2;
+//        bytes url = 3;
+//        int64 new_limit = 4;
+//        int64 new_public_limit = 5;
+//        }
+
 @Slf4j
 public class UpdateAssetActuator extends AbstractActuator {
 

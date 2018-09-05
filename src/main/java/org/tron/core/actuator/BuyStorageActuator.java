@@ -15,6 +15,11 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.BuyStorageContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message BuyStorageContract {
+//        bytes owner_address = 1;
+//        int64 quant = 2; // trx quantity for buy storage (sun)
+//        }
+
 @Slf4j
 public class BuyStorageActuator extends AbstractActuator {
 
@@ -41,6 +46,7 @@ public class BuyStorageActuator extends AbstractActuator {
         .get(buyStorageContract.getOwnerAddress().toByteArray());
     long quant = buyStorageContract.getQuant();
 
+    // 未细看
     storageMarket.buyStorage(accountCapsule, quant);
 
     ret.setStatus(fee, code.SUCESS);

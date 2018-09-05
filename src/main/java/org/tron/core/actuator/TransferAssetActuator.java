@@ -34,6 +34,16 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+import java.util.Arrays;
+import java.util.Map;
+
+//message TransferAssetContract {
+//        bytes asset_name = 1;
+//        bytes owner_address = 2;
+//        bytes to_address = 3;
+//        int64 amount = 4;
+//        }
+
 @Slf4j
 public class TransferAssetActuator extends AbstractActuator {
 
@@ -51,6 +61,7 @@ public class TransferAssetActuator extends AbstractActuator {
       byte[] ownerAddress = transferAssetContract.getOwnerAddress().toByteArray();
       byte[] toAddress = transferAssetContract.getToAddress().toByteArray();
       AccountCapsule toAccountCapsule = accountStore.get(toAddress);
+      // 如果目标账户不存在，则创建账户
       if (toAccountCapsule == null) {
         toAccountCapsule = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
             dbManager.getHeadBlockTimeStamp());
@@ -64,12 +75,14 @@ public class TransferAssetActuator extends AbstractActuator {
       dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
 
+      // 从转账账户减去转账金额
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerAddress);
       if (!ownerAccountCapsule.reduceAssetAmount(assetName.toByteArray(), amount)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
       accountStore.put(ownerAddress, ownerAccountCapsule);
 
+      // 向目标账户增加转账金额
       toAccountCapsule.addAssetAmount(assetName.toByteArray(), amount);
       accountStore.put(toAddress, toAccountCapsule);
 

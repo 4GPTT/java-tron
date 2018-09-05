@@ -15,6 +15,11 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.SellStorageContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message SellStorageContract {
+//        bytes owner_address = 1;
+//        int64 storage_bytes = 2;
+//        }
+
 @Slf4j
 public class SellStorageActuator extends AbstractActuator {
 

@@ -10,6 +10,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 
 //todo ： need Compatibility test
+// todo  有什么用
 @Component
 public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 

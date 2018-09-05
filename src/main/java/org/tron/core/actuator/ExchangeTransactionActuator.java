@@ -18,6 +18,15 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Contract.ExchangeTransactionContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+import java.util.Arrays;
+
+//message ExchangeTransactionContract {
+//        bytes owner_address = 1;
+//        int64 exchange_id = 2;
+//        bytes token_id = 3;
+//        int64 quant = 4;
+//        }
+
 @Slf4j
 public class ExchangeTransactionActuator extends AbstractActuator {
 

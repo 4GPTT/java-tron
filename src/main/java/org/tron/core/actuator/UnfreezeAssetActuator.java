@@ -18,6 +18,13 @@ import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+import java.util.Iterator;
+import java.util.List;
+
+//message UnfreezeAssetContract {
+//        bytes owner_address = 1;
+//        }
+
 @Slf4j
 public class UnfreezeAssetActuator extends AbstractActuator {
 

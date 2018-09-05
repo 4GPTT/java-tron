@@ -250,6 +250,7 @@ public class WitnessController {
 //    }
   }
 
+  // 计票，统计在一个周期内 被重新投票 所影响超级节点候选人的变化的票数
   private Map<ByteString, Long> countVote(VotesStore votesStore) {
     final Map<ByteString, Long> countWitness = Maps.newHashMap();
     Iterator<Map.Entry<byte[], VotesCapsule>> dbIterator = votesStore.iterator();
@@ -343,6 +344,7 @@ public class WitnessController {
         }
       });
 
+      // 按票数排序
       sortWitness(newWitnessAddressList);
       if (newWitnessAddressList.size() > ChainConstant.MAX_ACTIVE_WITNESS_NUM) {
         setActiveWitnesses(newWitnessAddressList.subList(0, ChainConstant.MAX_ACTIVE_WITNESS_NUM));
@@ -350,12 +352,14 @@ public class WitnessController {
         setActiveWitnesses(newWitnessAddressList);
       }
 
+      // 前127个超级节点候选人分奖励
       if (newWitnessAddressList.size() > ChainConstant.WITNESS_STANDBY_LENGTH) {
         payStandbyWitness(newWitnessAddressList.subList(0, ChainConstant.WITNESS_STANDBY_LENGTH));
       } else {
         payStandbyWitness(newWitnessAddressList);
       }
 
+      // 如果超级代表发生变化，则修改对应的属性参数
       List<ByteString> newWits = getActiveWitnesses();
       if (witnessSetChanged(currentWits, newWits)) {
         currentWits.forEach(address -> {
@@ -377,6 +381,7 @@ public class WitnessController {
     }
   }
 
+  // 去掉Gr中默认投票权重
   public void tryRemoveThePowerOfTheGr(){
     if(manager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == 1){
 
@@ -421,13 +426,14 @@ public class WitnessController {
     logger.debug(builder.toString());
   }
 
-
+  // 将witness按获取投票从大到小排序，然后字符串的hashCode从大到小排序
   private void sortWitness(List<ByteString> list) {
     list.sort(Comparator.comparingLong((ByteString b) -> getWitnesseByAddress(b).getVoteCount())
         .reversed()
         .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
+  // 给前127名超级节点候选人发放奖励，总额度115_200_000_000 sun
   private void payStandbyWitness(List<ByteString> list) {
     long voteSum = 0;
     long totalPay = manager.getDynamicPropertiesStore().getWitnessStandbyAllowance();

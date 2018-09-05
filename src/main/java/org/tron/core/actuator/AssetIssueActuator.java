@@ -37,6 +37,35 @@ import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+//message AssetIssueContract {
+//        message FrozenSupply {
+//        int64 frozen_amount = 1;
+//        int64 frozen_days = 2;
+//        }
+//        bytes owner_address = 1;
+//        bytes name = 2;
+//        bytes abbr = 3;
+//        int64 total_supply = 4;
+//        repeated FrozenSupply frozen_supply = 5;
+//        int32 trx_num = 6; // 和8号参数，计算汇率的
+//        int32 num = 8;
+//        int64 start_time = 9;
+//        int64 end_time = 10;
+//        int64 order = 11; // the order of tokens of the same name
+//        int32 vote_score = 16;
+//        bytes description = 20;
+//        bytes url = 21;
+//        int64 free_asset_net_limit = 22;
+//        int64 public_free_asset_net_limit = 23;
+//        int64 public_free_asset_net_usage = 24;
+//        int64 public_latest_free_net_time = 25;
+//        }
+
 @Slf4j
 public class AssetIssueActuator extends AbstractActuator {
 
@@ -65,6 +94,7 @@ public class AssetIssueActuator extends AbstractActuator {
           .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
       dbManager.adjustBalance(ownerAddress, -fee);
+      // 这个有的actor处理，有的没处理了，实际应该没有用到吧 todo
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
           fee);//send to blackhole
 
@@ -130,25 +160,31 @@ public class AssetIssueActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
+    // owner_address
     byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
+    // name
     if (!TransactionUtil.validAssetName(assetIssueContract.getName().toByteArray())) {
       throw new ContractValidateException("Invalid assetName");
     }
+    // abbr
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil
         .validAssetName(assetIssueContract.getAbbr().toByteArray())) {
       throw new ContractValidateException("Invalid abbreviation for token");
     }
+    // url
     if (!TransactionUtil.validUrl(assetIssueContract.getUrl().toByteArray())) {
       throw new ContractValidateException("Invalid url");
     }
+    // description
     if (!TransactionUtil
         .validAssetDescription(assetIssueContract.getDescription().toByteArray())) {
       throw new ContractValidateException("Invalid description");
     }
 
+    // start_time  end_time
     if (assetIssueContract.getStartTime() == 0) {
       throw new ContractValidateException("Start time should be not empty");
     }

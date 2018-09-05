@@ -22,6 +22,11 @@ import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message ProposalDeleteContract {
+//        bytes owner_address = 1;
+//        int64 proposal_id = 2;
+//        }
+
 @Slf4j
 public class ProposalDeleteActuator extends AbstractActuator {
 

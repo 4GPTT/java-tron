@@ -23,6 +23,12 @@ import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message ProposalApproveContract {
+//        bytes owner_address = 1;
+//        int64 proposal_id = 2;
+//        bool is_add_approval = 3; // add or remove approval
+//        }
+
 @Slf4j
 public class ProposalApproveActuator extends AbstractActuator {
 

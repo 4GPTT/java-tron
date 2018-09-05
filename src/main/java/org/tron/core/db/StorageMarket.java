@@ -207,7 +207,7 @@ public class StorageMarket {
   public void sellStorage(AccountCapsule accountCapsule, long bytes) {
     long now = dbManager.getHeadBlockTimeStamp();
     long currentStorageLimit = accountCapsule.getStorageLimit();
-
+    //暂不考虑
     long quant = exchange(bytes, false);
     long newBalance = accountCapsule.getBalance() + quant;
 

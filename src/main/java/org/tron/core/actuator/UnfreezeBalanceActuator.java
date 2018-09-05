@@ -20,6 +20,15 @@ import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+import java.util.Iterator;
+import java.util.List;
+
+//message UnfreezeBalanceContract {
+//        bytes owner_address = 1;
+//
+//        ResourceCode resource = 10;
+//        }
+
 @Slf4j
 public class UnfreezeBalanceActuator extends AbstractActuator {
 
@@ -62,6 +71,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             .setBalance(oldBalance + unfreezeBalance)
             .clearFrozen().addAllFrozen(frozenList).build());
 
+        // 这里会不会出现为负数的情况了，如果是负数的话，导致什么后果？            TODO
         dbManager.getDynamicPropertiesStore().addTotalNetWeight(-unfreezeBalance / 1000_000L);
         break;
       case ENERGY:
@@ -74,6 +84,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             .setBalance(oldBalance + unfreezeBalance)
             .setAccountResource(newAccountResource).build());
 
+        // 同上，是否存在为负数的情况
         dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
         break;
     }

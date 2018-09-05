@@ -28,6 +28,7 @@ abstract class ResourceProcessor {
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException;
 
   protected long increase(long lastUsage, long usage, long lastTime, long now) {
+    // 可以理解为24h内，每块平均消耗资源量
     long averageLastUsage = divideCeil(lastUsage * precision, windowSize);
     long averageUsage = divideCeil(usage * precision, windowSize);
 

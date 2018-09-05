@@ -13,6 +13,10 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Transaction.Contract;
 
+import java.util.List;
+
+import static java.lang.Long.max;
+
 @Slf4j
 public class EnergyProcessor extends ResourceProcessor {
 
@@ -38,7 +42,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
   @Override
   public void consume(TransactionCapsule trx, TransactionResultCapsule ret,
-      TransactionTrace trace)
+                      TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
     List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();
@@ -68,6 +72,7 @@ public class EnergyProcessor extends ResourceProcessor {
       AccountCapsule contractProvider = dbManager.getAccountStore()
           .get(contract.getProvider().toByteArray());
 
+      // 扣除合约所有者 Energy必须成功，否则报错
       if (!useEnergy(contractProvider, creatorEnergy, now)) {
         throw new ContractValidateException(
             "creator has not enough energy[" + creatorEnergy + "]");
@@ -105,7 +110,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
 
   private boolean useFee(AccountCapsule accountCapsule, long fee,
-      TransactionResultCapsule ret) {
+                         TransactionResultCapsule ret) {
     if (consumeFee(accountCapsule, fee)) {
       ret.addFee(fee);
       return true;

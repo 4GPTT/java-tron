@@ -16,6 +16,11 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message SetAccountIdContract {
+//        bytes account_id = 1;
+//        bytes owner_address = 2;
+//        }
+
 @Slf4j
 public class SetAccountIdActuator extends AbstractActuator {
 

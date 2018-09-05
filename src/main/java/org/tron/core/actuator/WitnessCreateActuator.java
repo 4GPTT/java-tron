@@ -17,6 +17,11 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message WitnessCreateContract {
+//        bytes owner_address = 1;
+//        bytes url = 2;
+//        }
+
 @Slf4j
 public class WitnessCreateActuator extends AbstractActuator {
 

@@ -17,6 +17,14 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+import java.util.Arrays;
+
+//message UpdateSettingContract {
+//        bytes owner_address = 1;
+//        bytes contract_address = 2;
+//        int64 consume_user_resource_percent = 3;
+//        }
+
 @Slf4j
 public class UpdateSettingContractActuator extends AbstractActuator {
 
