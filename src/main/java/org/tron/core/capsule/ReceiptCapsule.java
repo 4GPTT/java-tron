@@ -13,6 +13,7 @@ public class ReceiptCapsule {
 
   private ResourceReceipt receipt;
 
+  // 这个参数没有用到吧
   private Sha256Hash receiptAddress;
 
   public ReceiptCapsule(ResourceReceipt data, Sha256Hash receiptAddress) {

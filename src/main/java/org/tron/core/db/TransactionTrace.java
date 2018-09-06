@@ -52,6 +52,7 @@ public class TransactionTrace {
 
   public TransactionTrace(TransactionCapsule trx, Manager dbManager) {
     this.trx = trx;
+    // 这里交易contract 按一个处理的
     Transaction.Contract.ContractType contractType = this.trx.getInstance().getRawData()
         .getContract(0).getType();
     switch (contractType.getNumber()) {

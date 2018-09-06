@@ -525,12 +525,15 @@ public class Manager {
     this.getAccountStore().put(account.createDbKey(), account);
   }
 
+  // 校验父交易hash ？
   void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {
     byte[] refBlockHash = transactionCapsule.getInstance()
         .getRawData().getRefBlockHash().toByteArray();
     byte[] refBlockNumBytes = transactionCapsule.getInstance()
         .getRawData().getRefBlockBytes().toByteArray();
     try {
+      // 根据ref_block_bytes 保存的 ref_block_hash，如果一致，则直接返回；否则报错
+      // 到底什么东东？校验交易的父交易Hash ？
       byte[] blockHash = this.recentBlockStore.get(refBlockNumBytes).getData();
       if (Arrays.equals(blockHash, refBlockHash)) {
         return;
@@ -554,12 +557,15 @@ public class Manager {
     }
   }
 
+  // 校验校验交易数据大小和expiration时间
   void validateCommon(TransactionCapsule transactionCapsule)
       throws TransactionExpirationException, TooBigTransactionException {
+    // 交易数据不能超过500K字节
     if (transactionCapsule.getData().length > Constant.TRANSACTION_MAX_BYTE_SIZE) {
       throw new TooBigTransactionException(
           "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
     }
+    // 这个参数是交易处理的时间？ 必须大于当前块时间戳，小于 24h
     long transactionExpiration = transactionCapsule.getExpiration();
     long headBlockTime = getHeadBlockTimeStamp();
     if (transactionExpiration <= headBlockTime ||
@@ -570,6 +576,7 @@ public class Manager {
     }
   }
 
+  // ？？
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
     if (getTransactionStore().getUnchecked(transactionCapsule.getTransactionId().getBytes())
         != null) {

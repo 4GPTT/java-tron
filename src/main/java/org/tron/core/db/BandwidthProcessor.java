@@ -82,26 +82,32 @@ public class BandwidthProcessor extends ResourceProcessor {
       }
       long now = dbManager.getWitnessController().getHeadSlot();
 
+      // 如果需要创建账户，则创建账户，返回true；否则返回false
       if (contractCreateNewAccount(contract)) {
+        // 如果是转账类型，TRX或其他Token，仅消耗创建账户合约的BP，转账合约的BP不再消耗了
         consumeForCreateNewAccount(accountCapsule, bytesSize, now, ret);
         trace.setNetBill(0, ret.getFee());
         continue;
       }
 
       if (contract.getType() == TransferAssetContract) {
+        // 转账发布的Token，优先扣除发布Token搜有者的BP
         if (useAssetAccountNet(contract, accountCapsule, now, bytesSize)) {
           continue;
         }
       }
 
+      // 扣除调用者 通过冻结TRX获取的 BP
       if (useAccountNet(accountCapsule, bytesSize, now)) {
         continue;
       }
 
+      // 扣除调用者免费的BP
       if (useFreeNet(accountCapsule, bytesSize, now)) {
         continue;
       }
 
+      // 扣费 10sun/byte
       if (useTransactionFee(accountCapsule, bytesSize, ret)) {
         trace.setNetBill(0, ret.getFee());
         continue;
@@ -126,12 +132,14 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
   }
 
+  // 扣除创建账户消耗的BP 或 费用
   private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
       long now, TransactionResultCapsule resultCapsule)
       throws AccountResourceInsufficientException {
     boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, bytes, now);
 
     if (!ret) {
+      // 如果 通过冻结TRX获取的BP 不足以支付，则扣除0.1TRX代替
       ret = consumeFeeForCreateNewAccount(accountCapsule, resultCapsule);
       if (!ret) {
         throw new AccountResourceInsufficientException();
@@ -139,6 +147,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
   }
 
+  // 如果用户的BP足够支付，则扣除消耗的BP，返回true；否则返回false
   public boolean consumeBandwidthForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
       long now) {
 
@@ -207,6 +216,7 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
 
+  // 优先扣除发布Token所有者 的BP，都满足扣除，则返回true；否则返回false
   private boolean useAssetAccountNet(Contract contract, AccountCapsule accountCapsule, long now,
       long bytes)
       throws ContractValidateException {
@@ -235,6 +245,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     long newPublicFreeAssetNetUsage = increase(publicFreeAssetNetUsage, 0,
         publicLatestFreeNetTime, now);
 
+    // 判断 发布Token 所有调用者共用BP 剩余量是否足够
     if (bytes > (publicFreeAssetNetLimit - newPublicFreeAssetNetUsage)) {
       logger.debug("The " + assetNameString + " public free bandwidth is not enough");
       return false;
@@ -250,6 +261,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     long newFreeAssetNetUsage = increase(freeAssetNetUsage, 0,
         latestAssetOperationTime, now);
 
+    // 判断 调用者 发布资产使用BP 剩余量是否足够扣除
     if (bytes > (freeAssetNetLimit - newFreeAssetNetUsage)) {
       logger.debug("The " + assetNameString + " free bandwidth is not enough");
       return false;
@@ -264,6 +276,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long newIssuerNetUsage = increase(issuerNetUsage, 0, latestConsumeTime, now);
 
+    // 发布Token 所有者 冻结TRX获取BP 剩余量是否满足
     if (bytes > (issuerNetLimit - newIssuerNetUsage)) {
       logger.debug("The " + assetNameString + " issuer'bandwidth is not enough");
       return false;

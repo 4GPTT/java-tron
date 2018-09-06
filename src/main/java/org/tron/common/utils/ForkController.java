@@ -17,7 +17,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Component
 public class ForkController {
 
-  public static final int DISCARD_SCOPE = ContractType.UpdateAssetContract.getNumber();
+  public static final int DISCARD_SCOPE = ContractType.UpdateAssetContract.getNumber(); // 15 ？
 
   @Getter
   private Manager manager;
@@ -71,6 +71,7 @@ public class ForkController {
     }
   }
 
+  // 将block 头中的版本号写入 slot
   public synchronized void update(BlockCapsule blockCapsule) {
     if (forked) {
       return;
