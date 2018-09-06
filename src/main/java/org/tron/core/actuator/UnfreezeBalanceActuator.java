@@ -87,6 +87,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         // 同上，是否存在为负数的情况
         dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
         break;
+      default:
+        //this should never happen
+        break;
     }
 
     VotesCapsule votesCapsule;
