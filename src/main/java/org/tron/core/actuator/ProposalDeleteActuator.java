@@ -67,6 +67,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    // 基本参数校验
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
@@ -88,10 +89,12 @@ public class ProposalDeleteActuator extends AbstractActuator {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
+    // 调用者地址格式是否合法
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
+    // 调用者是否存在
     if(!Objects.isNull(deposit)) {
       if (Objects.isNull(deposit.getAccount(ownerAddress))) {
         throw new ContractValidateException(
@@ -101,11 +104,13 @@ public class ProposalDeleteActuator extends AbstractActuator {
       throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
+    // 提议ID是否合法
     long latestProposalNum = Objects.isNull(deposit) ? dbManager.getDynamicPropertiesStore().getLatestProposalNum() : deposit.getLatestProposalNum();
     if (contract.getProposalId() > latestProposalNum) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + NOT_EXIST_STR);
     }
 
+    // 提议是否存在
     ProposalCapsule proposalCapsule;
     try {
       proposalCapsule = Objects.isNull(getDeposit()) ? dbManager.getProposalStore().
@@ -115,11 +120,14 @@ public class ProposalDeleteActuator extends AbstractActuator {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + NOT_EXIST_STR);
     }
 
+    // 验证删除提议的账户跟创建提议的账户地址是否一致
     long now = dbManager.getHeadBlockTimeStamp();
     if (!proposalCapsule.getProposalAddress().equals(contract.getOwnerAddress())) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + "] "
           + "is not proposed by " + readableOwnerAddress);
     }
+
+    // 是否已经过了犹豫期或者已经被取消了
     if (now >= proposalCapsule.getExpirationTime()) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + "] expired");
     }

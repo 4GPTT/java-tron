@@ -22,6 +22,11 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message ProposalCreateContract {
+//        bytes owner_address = 1;
+//        map<int64, int64> parameters = 2;
+//        }
+
 @Slf4j
 public class ProposalCreateActuator extends AbstractActuator {
 
@@ -65,7 +70,6 @@ public class ProposalCreateActuator extends AbstractActuator {
         deposit.putDynamicPropertiesWithLatestProposalNum(id);
       }
 
-
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -77,6 +81,7 @@ public class ProposalCreateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    // 基本参数校验
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
@@ -98,10 +103,12 @@ public class ProposalCreateActuator extends AbstractActuator {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
+    // 调用者地址基本校验
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
+    // 调用者是否存在
     if(!Objects.isNull(deposit)) {
       if (Objects.isNull(deposit.getAccount(ownerAddress))) {
         throw new ContractValidateException(
@@ -112,6 +119,7 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
+    // 调用者是否为超级节点
     if( !Objects.isNull(getDeposit())) {
       if (Objects.isNull(getDeposit().getWitness(ownerAddress))) {
         throw new ContractValidateException(
@@ -121,6 +129,7 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException(WITNESS_EXCEPTION_STR+ readableOwnerAddress + NOT_EXIST_STR);
     }
 
+    // 校验提议ID的范围，提议的值，是否合法
     for (Map.Entry<Long, Long> entry : contract.getParametersMap().entrySet()) {
       if (!validKey(entry.getKey())) {
         throw new ContractValidateException("Bad chain parameter id");

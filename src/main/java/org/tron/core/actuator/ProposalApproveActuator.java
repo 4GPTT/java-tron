@@ -73,6 +73,7 @@ public class ProposalApproveActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    // 基本参数校验
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
@@ -94,10 +95,12 @@ public class ProposalApproveActuator extends AbstractActuator {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
+    // 调用者地址基本校验
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
+    // 验证调用者地址是否存在
     if(!Objects.isNull(getDeposit())) {
       if (Objects.isNull(getDeposit().getAccount(ownerAddress))) {
         throw new ContractValidateException(
@@ -107,6 +110,7 @@ public class ProposalApproveActuator extends AbstractActuator {
       throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
+    // 是否为超级节点
     if( !Objects.isNull(getDeposit())) {
       if (Objects.isNull(getDeposit().getWitness(ownerAddress))) {
         throw new ContractValidateException(
@@ -116,12 +120,14 @@ public class ProposalApproveActuator extends AbstractActuator {
       throw new ContractValidateException(WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
+    // 校验提议ID是否合法
     long latestProposalNum = Objects.isNull(getDeposit()) ? dbManager.getDynamicPropertiesStore().getLatestProposalNum() :
         getDeposit().getLatestProposalNum();
     if (contract.getProposalId() > latestProposalNum) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + NOT_EXIST_STR);
     }
 
+    // 校验提议是否存在
     long now = dbManager.getHeadBlockTimeStamp();
     ProposalCapsule proposalCapsule;
     try {
@@ -132,12 +138,15 @@ public class ProposalApproveActuator extends AbstractActuator {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR+ contract.getProposalId() + NOT_EXIST_STR);
     }
 
+    // 校验提议是否处在犹豫期，是否提议者中途取消
     if (now >= proposalCapsule.getExpirationTime()) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + "] expired");
     }
     if (proposalCapsule.getState() == State.CANCELED) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId() + "] canceled");
     }
+
+    // 不允许重复赞成，未赞成时取消赞成
     if (!contract.getIsAddApproval()) {
       if (!proposalCapsule.getApprovals().contains(contract.getOwnerAddress())) {
         throw new ContractValidateException(
