@@ -56,11 +56,13 @@ public class BandwidthProcessor extends ResourceProcessor {
   public void consume(TransactionCapsule trx, TransactionResultCapsule ret,
       TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
+    // 这里目前就一个合约，交易合约结果序列化不能超过64
     List<Contract> contracts = trx.getInstance().getRawData().getContractList();
     if (trx.getResultSerializedSize() > Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
       throw new TooBigTransactionResultException();
     }
 
+    // 支持虚拟机的话，就把结果 清除下
     long bytesSize;
     if (dbManager.getDynamicPropertiesStore().supportVM()) {
       bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
@@ -68,6 +70,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       bytesSize = trx.getSerializedSize();
     }
 
+    // 仅一个合约
     for (Contract contract : contracts) {
       if (dbManager.getDynamicPropertiesStore().supportVM()) {
         bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;

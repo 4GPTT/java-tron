@@ -1036,6 +1036,7 @@ public class Manager {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
+    // 没有分叉，则报异常
     forkController.hardFork(trxCap);
 
     validateDup(trxCap);

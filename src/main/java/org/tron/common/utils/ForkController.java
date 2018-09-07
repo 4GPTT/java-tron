@@ -61,7 +61,7 @@ public class ForkController {
 
   public synchronized void hardFork(TransactionCapsule capsule) throws ContractExeException {
     boolean hardFork = shouldBeForked()
-        || capsule.getInstance().getRawData().getContractList().get(0).getType().getNumber()
+        || capsule.getInstance().getRawData().getContractList().get(0).getType().getNumber()  //15
         <= DISCARD_SCOPE;
     if (logger.isDebugEnabled()) {
       logger.debug("*****hardFork:" + hardFork);
