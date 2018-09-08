@@ -12,16 +12,12 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.Result;
-import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j
 public class BandwidthProcessor extends ResourceProcessor {
@@ -53,8 +49,7 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   @Override
-  public void consume(TransactionCapsule trx, TransactionResultCapsule ret,
-      TransactionTrace trace)
+  public void consume(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
     // 这里目前就一个合约，交易合约结果序列化不能超过64
     List<Contract> contracts = trx.getInstance().getRawData().getContractList();
@@ -87,9 +82,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
       // 如果需要创建账户，则创建账户，返回true；否则返回false
       if (contractCreateNewAccount(contract)) {
-        // 如果是转账类型，TRX或其他Token，仅消耗创建账户合约的BP，转账合约的BP不再消耗了
-        consumeForCreateNewAccount(accountCapsule, bytesSize, now, ret);
-        trace.setNetBill(0, ret.getFee());
+        consumeForCreateNewAccount(accountCapsule, bytesSize, now, trace);
         continue;
       }
 
@@ -110,9 +103,7 @@ public class BandwidthProcessor extends ResourceProcessor {
         continue;
       }
 
-      // 扣费 10sun/byte
-      if (useTransactionFee(accountCapsule, bytesSize, ret)) {
-        trace.setNetBill(0, ret.getFee());
+      if (useTransactionFee(accountCapsule, bytesSize, trace)) {
         continue;
       }
 
@@ -124,10 +115,10 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   private boolean useTransactionFee(AccountCapsule accountCapsule, long bytes,
-      TransactionResultCapsule ret) {
+      TransactionTrace trace) {
     long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytes;
     if (consumeFee(accountCapsule, fee)) {
-      ret.addFee(fee);
+      trace.setNetBill(0, fee);
       dbManager.getDynamicPropertiesStore().addTotalTransactionCost(fee);
       return true;
     } else {
@@ -137,13 +128,12 @@ public class BandwidthProcessor extends ResourceProcessor {
 
   // 扣除创建账户消耗的BP 或 费用
   private void consumeForCreateNewAccount(AccountCapsule accountCapsule, long bytes,
-      long now, TransactionResultCapsule resultCapsule)
+      long now, TransactionTrace trace)
       throws AccountResourceInsufficientException {
     boolean ret = consumeBandwidthForCreateNewAccount(accountCapsule, bytes, now);
 
     if (!ret) {
-      // 如果 通过冻结TRX获取的BP 不足以支付，则扣除0.1TRX代替
-      ret = consumeFeeForCreateNewAccount(accountCapsule, resultCapsule);
+      ret = consumeFeeForCreateNewAccount(accountCapsule, trace);
       if (!ret) {
         throw new AccountResourceInsufficientException();
       }

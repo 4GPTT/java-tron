@@ -7,15 +7,10 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Transaction.Contract;
-
-import java.util.List;
-
-import static java.lang.Long.max;
 
 @Slf4j
 public class EnergyProcessor extends ResourceProcessor {
@@ -41,8 +36,8 @@ public class EnergyProcessor extends ResourceProcessor {
   }
 
   @Override
-  public void consume(TransactionCapsule trx, TransactionResultCapsule ret,
-                      TransactionTrace trace)
+  public void consume(TransactionCapsule trx,
+      TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException {
     List<Contract> contracts =
         trx.getInstance().getRawData().getContractList();
@@ -94,7 +89,7 @@ public class EnergyProcessor extends ResourceProcessor {
       }
 
       //2.The creator of this have sufficient resources
-      if (useFee(accountCapsule, fee, ret)) {
+      if (useFee(accountCapsule, fee, trace)) {
         continue;
       }
 
@@ -110,9 +105,9 @@ public class EnergyProcessor extends ResourceProcessor {
 
 
   private boolean useFee(AccountCapsule accountCapsule, long fee,
-                         TransactionResultCapsule ret) {
+      TransactionTrace trace) {
     if (consumeFee(accountCapsule, fee)) {
-      ret.addFee(fee);
+      trace.setNetBill(0, fee);
       return true;
     } else {
       return false;
