@@ -91,13 +91,16 @@ public class ReceiptCapsule {
    */
   public void payEnergyBill(Manager manager, AccountCapsule origin, AccountCapsule caller,
       long percent, EnergyProcessor energyProcessor, long now) throws BalanceInsufficientException {
+    // 如果不消耗Energy，则直接返回
     if (receipt.getEnergyUsageTotal() <= 0) {
       return;
     }
 
+    // 合约开发者和调用者为同一账户，直接扣除
     if (caller.getAddress().equals(origin.getAddress())) {
       payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
     } else {
+      // 按智能合约中的比例，扣除合约开发者的Energy，不足和剩余的部分扣除调用者的Energy
       long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
       originUsage = Math
           .min(originUsage, energyProcessor.getAccountLeftEnergyFromFreeze(origin));
@@ -120,6 +123,7 @@ public class ReceiptCapsule {
       this.setEnergyUsage(usage);
     } else {
       energyProcessor.useEnergy(account, accountEnergyLeft, now);
+      // 不足部分，按100sun/Energy扣除，余额不足则失败异常退出
       long SUN_PER_ENERGY = manager.getDynamicPropertiesStore().getEnergyFee() == 0
           ? Constant.SUN_PER_ENERGY
           : manager.getDynamicPropertiesStore().getEnergyFee();
@@ -132,8 +136,8 @@ public class ReceiptCapsule {
         throw new BalanceInsufficientException(
             StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
       }
+      // 扣除抵消Energy的费用，并将费用加入到Blackhole中
       account.setBalance(balance - energyFee);
-
       manager.adjustBalance(manager.getAccountStore().getBlackhole().getAddress().toByteArray(),
           energyFee);//send to blackhole
     }
