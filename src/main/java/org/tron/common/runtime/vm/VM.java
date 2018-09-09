@@ -74,6 +74,7 @@ public class VM {
     // memory drop consume calc
     long memoryUsage = (newMemSize.longValueExact() + 31) / 32 * 32;
     if (memoryUsage > oldMemSize) {
+      // 计算的规则是什么 ？
       long memWords = (memoryUsage / 32);
       long memWordsOld = (oldMemSize / 32);
       //TODO #POC9 c_quadCoeffDiv = 512, this should be a constant, not magic number

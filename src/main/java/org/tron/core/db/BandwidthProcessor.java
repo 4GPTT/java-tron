@@ -168,10 +168,10 @@ public class BandwidthProcessor extends ResourceProcessor {
   }
 
   public boolean consumeFeeForCreateNewAccount(AccountCapsule accountCapsule,
-      TransactionResultCapsule ret) {
+      TransactionTrace trace) {
     long fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
     if (consumeFee(accountCapsule, fee)) {
-      ret.addFee(fee);
+      trace.setNetBill(0, fee);
       dbManager.getDynamicPropertiesStore().addTotalCreateAccountCost(fee);
       return true;
     } else {

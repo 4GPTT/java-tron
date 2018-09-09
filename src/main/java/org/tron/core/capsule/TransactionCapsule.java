@@ -456,6 +456,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       try {
         Transaction.Contract contract = listContract.get(i);
         byte[] owner = getOwner(contract);
+        // 通过源数据 签名 计算账户地址
         byte[] address = ECKey.signatureToAddress(getRawHash().getBytes(),
             getBase64FromByteString(this.transaction.getSignature(i)));
         if (!Arrays.equals(owner, address)) {

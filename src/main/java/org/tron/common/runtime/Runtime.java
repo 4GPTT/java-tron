@@ -213,30 +213,40 @@ public class Runtime {
     }
   }
 
+
+    // 感觉这里的feeLimit 有点乱，1 通过100sun/Energy  2 冻结TRX获取  TODO
+    // 获取创建合约的Energy的限制
   private long getEnergyLimit(AccountCapsule account, long feeLimit, long callValue) {
 
+      // 获取Energy的费率，可变费率和固定费率的适配
     long SUN_PER_ENERGY = deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() == 0
         ? Constant.SUN_PER_ENERGY :
         deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee();
     // can change the calc way
     long leftEnergyFromFreeze = energyProcessor.getAccountLeftEnergyFromFreeze(account);
     callValue = max(callValue, 0);
+    // 可以余额扣除callValue后 可以购买Energy的量
     long energyFromBalance = Math
         .floorDiv(max(account.getBalance() - callValue, 0), SUN_PER_ENERGY);
 
     long energyFromFeeLimit;
+    // 账户为获取Energy冻结的 TRX数量
     long totalBalanceForEnergyFreeze = account.getAccountResource().getFrozenBalanceForEnergy()
         .getFrozenBalance();
     if (0 == totalBalanceForEnergyFreeze) {
       energyFromFeeLimit =
           feeLimit / SUN_PER_ENERGY;
     } else {
+        // 账户冻结TRX平分 Energy的量
       long totalEnergyFromFreeze = energyProcessor
           .calculateGlobalEnergyLimit(totalBalanceForEnergyFreeze);
+
+      // 剩余Energy换算 冻结TRX的量
       long leftBalanceForEnergyFreeze = getEnergyFee(totalBalanceForEnergyFreeze,
           leftEnergyFromFreeze,
           totalEnergyFromFreeze);
 
+      // 获取feeLimit 限制下可以使用
       if (leftBalanceForEnergyFreeze >= feeLimit) {
         energyFromFeeLimit = BigInteger.valueOf(totalEnergyFromFreeze)
             .multiply(BigInteger.valueOf(feeLimit))
@@ -248,9 +258,11 @@ public class Runtime {
       }
     }
 
+    // 获取能量的限制，换算为 Token了
     return min(Math.addExact(leftEnergyFromFreeze, energyFromBalance), energyFromFeeLimit);
   }
 
+  // 获取可以使用的Energy的量
   private long getEnergyLimit(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit, long callValue) {
 
@@ -269,6 +281,7 @@ public class Runtime {
 
     consumeUserResourcePercent = max(0, min(consumeUserResourcePercent, 100));
 
+    // 这句代码不理解 TODO
     if (creatorEnergyLimit * consumeUserResourcePercent
         > (100 - consumeUserResourcePercent) * callerEnergyLimit) {
       return Math.floorDiv(callerEnergyLimit * 100, consumeUserResourcePercent);
@@ -290,8 +303,10 @@ public class Runtime {
       // self witness 3, other witness 3, fullnode 2
       {
         if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
+            // 如果交易处理超时，意思意思就行了
           thisTxCPULimitInUsRatio = Args.getInstance().getMinTimeRatio();
         } else {
+            // 正常交易，验证是调大容允度
           thisTxCPULimitInUsRatio = Args.getInstance().getMaxTimeRatio();
         }
       }
@@ -307,11 +322,14 @@ public class Runtime {
    **/
   private void create()
       throws ContractValidateException {
+    // 代码走到这里，虚拟机的功能肯定已经被打开了
     if (!deposit.getDbManager().getDynamicPropertiesStore().supportVM()) {
       logger.error("vm work is off, need to be opened by the committee");
       throw new ContractValidateException("vm work is off, need to be opened by the committee");
     }
 
+    // 这里获取的对象是否存在为空的风险？？
+    // 如果是内部函数，是否可以放心？ TODO
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     SmartContract newSmartContract = contract.getNewContract();
     if (!contract.getOwnerAddress().equals(newSmartContract.getOriginAddress())) {
@@ -323,6 +341,7 @@ public class Runtime {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     byte[] contractName = newSmartContract.getName().getBytes();
 
+    // 对传入参数的基本校验
     if (contractName.length > 32) {
       logger.error("contractName's length mustn't be greater than 32");
       throw new ContractValidateException("contractName's length mustn't be greater than 32");
@@ -374,6 +393,7 @@ public class Runtime {
             "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
 
+      // 获取可以使用的Energy
       long energyLimit = getEnergyLimit(creator, feeLimit, callValue);
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       InternalTransaction internalTransaction = new InternalTransaction(trx);
@@ -493,6 +513,7 @@ public class Runtime {
     try {
 
       TransactionCapsule trxCap = new TransactionCapsule(trx);
+      // 如果出块交易已经超时，则报异常， 看下这里会存在超时的情况吗，未进虚拟机前  TODO
       if (null != blockCap && blockCap.generatedByMyself && null != trxCap.getContractRet()
           && contractResult.OUT_OF_TIME
           .equals(trxCap.getContractRet())) {
@@ -519,6 +540,7 @@ public class Runtime {
 
         if (TRX_CONTRACT_CREATION_TYPE == trxType && !result.isRevert()) {
           byte[] code = program.getResult().getHReturn();
+          // 存储，每字节200 Energy，不是不考虑存储吗？
           long saveCodeEnergy = getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
           long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
           if (afterSpend < 0) {
@@ -587,6 +609,7 @@ public class Runtime {
 
   public boolean isCallConstant() throws ContractValidateException {
 
+      // 这个代码 需要优化下吧？ TODO
     TriggerSmartContract triggerContractFromTransaction = ContractCapsule
         .getTriggerContractFromTransaction(trx);
     if (TRX_CONTRACT_CALL_TYPE.equals(trxType)) {

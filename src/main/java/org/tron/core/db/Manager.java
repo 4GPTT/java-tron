@@ -262,6 +262,7 @@ public class Manager {
     witnessController.setActiveWitnesses(witnessAddresses);
   }
 
+  // 获取当前的最新块
   public BlockCapsule getHead() throws HeaderNotFound {
     List<BlockCapsule> blocks = getBlockStore().getBlockByLatestNum(1);
     if (CollectionUtils.isNotEmpty(blocks)) {
@@ -272,6 +273,7 @@ public class Manager {
     }
   }
 
+  // 涉及到多线程同步？有机会细看下 TODO
   public synchronized BlockId getHeadBlockId() {
     return new BlockId(
         getDynamicPropertiesStore().getLatestBlockHeaderHash(),
@@ -1013,6 +1015,7 @@ public class Manager {
   /**
    * Process transaction.
    */
+  // 如果blockCap为空，则是普通的验证；否则是打包或者是验证收到的块链的每一笔交易
   public boolean processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException, ReceiptException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
@@ -1028,7 +1031,7 @@ public class Manager {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
-    // 没有分叉，则报异常
+    // 这里不是很明白，干什么用的，处理交易被多重打包？ TODO
     forkController.hardFork(trxCap);
 
     validateDup(trxCap);
@@ -1080,6 +1083,7 @@ public class Manager {
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult(runtime);
+      // 这里是不是收到广播的链块，验证每一笔交易结果是否一致
       if (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
         trace.check();
       }
@@ -1222,6 +1226,7 @@ public class Manager {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
+    // 增加默克尔树hash及witness的签名
     logger.info(
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
             + "]");
@@ -1291,6 +1296,7 @@ public class Manager {
   /**
    * process block.
    */
+  // check  TODO
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
@@ -1596,9 +1602,11 @@ public class Manager {
     }
   }
 
+  // 收到广播的新交易，处理函数入口
   public void rePush(TransactionCapsule tx) {
 
     try {
+      // 如果交易已经被处理掉了，忽略这个交易
       if (transactionStore.get(tx.getTransactionId().getBytes()) != null) {
         return;
       }

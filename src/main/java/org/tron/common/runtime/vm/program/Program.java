@@ -1065,6 +1065,7 @@ public class Program {
     }
   }
 
+  // 未超过最大深度，则继续增加堆栈深度
   public void saveOpTrace() {
     if (this.pc < ops.length) {
       trace.addOp(ops[pc], pc, getCallDeep(), getEnergyLimitLeft(), traceListener.resetActions());

@@ -150,6 +150,7 @@ public class EnergyProcessor extends ResourceProcessor {
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }
 
+  // 获取剩余的可用Energy的量
   public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
 
     long now = dbManager.getWitnessController().getHeadSlot();

@@ -225,6 +225,7 @@ public class Wallet {
     return null;
   }
 
+  // 获取合约的地址，交易中 sha256（rawData）+ ownerAddress 的加密哈希结果
   public static byte[] generateContractAddress(Transaction trx) {
 
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);

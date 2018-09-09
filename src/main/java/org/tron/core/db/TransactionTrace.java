@@ -162,7 +162,9 @@ public class TransactionTrace {
         dbManager.getWitnessController().getHeadSlot());
   }
 
+  // 验证处理的结果是否一致
   public void check() throws ReceiptCheckErrException {
+    // 普通合约才验证 ？
     if (!needVM()) {
       return;
     }
