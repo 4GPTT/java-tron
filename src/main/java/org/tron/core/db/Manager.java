@@ -187,10 +187,6 @@ public class Manager {
     return this.witnessStore;
   }
 
-  private void setWitnessStore(final WitnessStore witnessStore) {
-    this.witnessStore = witnessStore;
-  }
-
   public DynamicPropertiesStore getDynamicPropertiesStore() {
     return this.dynamicPropertiesStore;
   }
@@ -287,27 +283,6 @@ public class Manager {
     return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
   }
 
-//  public PeersStore getPeersStore() {
-//    return peersStore;
-//  }
-//
-//  public void setPeersStore(PeersStore peersStore) {
-//    this.peersStore = peersStore;
-//  }
-//
-//  public Node getHomeNode() {
-//    final Args args = Args.getInstance();
-//    Set<Node> nodes = this.peersStore.get("home".getBytes());
-//    if (nodes.size() > 0) {
-//      return nodes.stream().findFirst().get();
-//    } else {
-//      Node node =
-//          new Node(new ECKey().getNodeId(), args.getNodeExternalIp(), args.getNodeListenPort());
-//      nodes.add(node);
-//      this.peersStore.put("home".getBytes(), nodes);
-//      return node;
-//    }
-//  }
 
   public void clearAndWriteNeighbours(Set<Node> nodes) {
     this.peersStore.put("neighbours".getBytes(), nodes);
@@ -378,14 +353,8 @@ public class Manager {
     }
     forkController.init(this);
     revokingStore.enable();
-
-//    this.codeStore = CodeStore.create("code");
-//    this.contractStore = ContractStore.create("contract");
-//    this.storageStore = StorageStore.create("storage");
-
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
-
     repushThread = new Thread(repushLoop);
     repushThread.start();
   }
@@ -414,7 +383,7 @@ public class Manager {
       } else {
         logger.info("create genesis block");
         Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
-        // this.pushBlock(this.genesisBlock);
+
         blockStore.put(this.genesisBlock.getBlockId().getBytes(), this.genesisBlock);
         this.blockIndexStore.put(this.genesisBlock.getBlockId());
 
@@ -605,7 +574,6 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    //validateFreq(trx);
     synchronized (this) {
       if (!session.valid()) {
         session.setValue(revokingStore.buildSession());
@@ -628,39 +596,6 @@ public class Manager {
     processor.consume(trx, trace);
   }
 
-  @Deprecated
-  private void validateFreq(TransactionCapsule trx) throws HighFreqException {
-    List<org.tron.protos.Protocol.Transaction.Contract> contracts =
-        trx.getInstance().getRawData().getContractList();
-    for (Transaction.Contract contract : contracts) {
-      if (contract.getType() == TransferContract || contract.getType() == TransferAssetContract) {
-        byte[] address = TransactionCapsule.getOwner(contract);
-        AccountCapsule accountCapsule = this.getAccountStore().getUnchecked(address);
-        if (accountCapsule == null) {
-          throw new HighFreqException("account not exists");
-        }
-        long balance = accountCapsule.getBalance();
-        long latestOperationTime = accountCapsule.getLatestOperationTime();
-        if (latestOperationTime != 0) {
-          doValidateFreq(balance, 0, latestOperationTime);
-        }
-        accountCapsule.setLatestOperationTime(Time.getCurrentMillis());
-        this.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-      }
-    }
-  }
-
-  @Deprecated
-  private void doValidateFreq(long balance, int transNumber, long latestOperationTime)
-      throws HighFreqException {
-    long now = Time.getCurrentMillis();
-    // todo: avoid ddos, design more smoothly formula later.
-    if (balance < 1000000 * 1000) {
-      if (now - latestOperationTime < 5 * 60 * 1000) {
-        throw new HighFreqException("try later");
-      }
-    }
-  }
 
   /**
    * when switch fork need erase blocks on fork branch.
@@ -798,10 +733,6 @@ public class Manager {
     }
   }
 
-  // TODO: if error need to rollback.
-
-  private synchronized void filterPendingTrx(List<TransactionCapsule> listTrx) {
-  }
 
   /**
    * save a block.
@@ -1153,7 +1084,6 @@ public class Manager {
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
         processTransaction(trx, blockCapsule);
-        // trx.resetResult();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -1241,33 +1171,22 @@ public class Manager {
     return null;
   }
 
-  private void setAccountStore(final AccountStore accountStore) {
-    this.accountStore = accountStore;
-  }
+
 
   public TransactionStore getTransactionStore() {
     return this.transactionStore;
   }
 
-  private void setTransactionStore(final TransactionStore transactionStore) {
-    this.transactionStore = transactionStore;
-  }
+
 
   public TransactionHistoryStore getTransactionHistoryStore() {
     return this.transactionHistoryStore;
-  }
-
-  private void setTransactionHistoryStore(final TransactionHistoryStore transactionHistoryStore) {
-    this.transactionHistoryStore = transactionHistoryStore;
   }
 
   public BlockStore getBlockStore() {
     return this.blockStore;
   }
 
-  private void setBlockStore(final BlockStore blockStore) {
-    this.blockStore = blockStore;
-  }
 
   /**
    * process block.
@@ -1305,7 +1224,6 @@ public class Manager {
     this.updateLatestSolidifiedBlock();
     this.updateTransHashCache(block);
     updateMaintenanceState(needMaint);
-    //witnessController.updateWitnessSchedule();
     updateRecentBlock(block);
 
   }
@@ -1487,7 +1405,7 @@ public class Manager {
   }
 
   public void closeAllStore() {
-    System.err.println("******** begin to close db ********");
+    logger.info("******** begin to close db ********");
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
@@ -1501,22 +1419,27 @@ public class Manager {
     closeOneStore(codeStore);
     closeOneStore(contractStore);
     closeOneStore(storageRowStore);
-    System.err.println("******** end to close db ********");
+    closeOneStore(exchangeStore);
+    closeOneStore(peersStore);
+    closeOneStore(proposalStore);
+    closeOneStore(recentBlockStore);
+    closeOneStore(transactionHistoryStore);
+    closeOneStore(votesStore);
+    logger.info("******** end to close db ********");
   }
 
   private void closeOneStore(ITronChainBase database) {
-    System.err.println("******** begin to close " + database.getName() + " ********");
+    logger.info("******** begin to close " + database.getName() + " ********");
     try {
       database.close();
     } catch (Exception e) {
-      System.err.println("failed to close  " + database.getName() + ". " + e);
+      logger.info("failed to close  " + database.getName() + ". " + e);
     } finally {
-      System.err.println("******** end to close " + database.getName() + " ********");
+      logger.info("******** end to close " + database.getName() + " ********");
     }
   }
 
   public boolean isTooManyPending() {
-    // if (getPendingTransactions().size() + PendingManager.getTmpTransactions().size()
     if (getPendingTransactions().size() + getRepushTransactions().size()
         > MAX_TRANSACTION_PENDING) {
       return true;
