@@ -621,6 +621,7 @@ public class Manager {
   }
 
 
+  // 在处理或验证这笔交易的时候，都会调用这个函数，如何做到不重复扣除的了？
   public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
@@ -679,6 +680,8 @@ public class Manager {
       logger.warn(e.getMessage(), e);
     }
   }
+
+  // 2018-09-10 上午
 
   public void pushVerifiedBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,

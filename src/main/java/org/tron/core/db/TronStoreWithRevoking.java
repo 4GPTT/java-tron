@@ -76,6 +76,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     return of(revokingDB.get(key));
   }
 
+  // getUnchecked 跟 get 函数有什么区别？
   @Override
   public T getUnchecked(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
