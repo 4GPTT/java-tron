@@ -103,6 +103,7 @@ public class BandwidthProcessor extends ResourceProcessor {
         continue;
       }
 
+      // 再不足，则燃烧TRX
       if (useTransactionFee(accountCapsule, bytesSize, trace)) {
         continue;
       }

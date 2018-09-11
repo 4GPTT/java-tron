@@ -317,8 +317,10 @@ public class WitnessController {
     VotesStore votesStore = manager.getVotesStore();
     AccountStore accountStore = manager.getAccountStore();
 
+    // 去掉Gr中默认投票权重
     tryRemoveThePowerOfTheGr();
 
+    // 获取一个投票期内，有变动的超级代表候选人情况
     Map<ByteString, Long> countWitness = countVote(votesStore);
 
     //Only possible during the initialization phase

@@ -1228,7 +1228,7 @@ public class Manager {
       processTransaction(transactionCapsule, block);
     }
 
-    // 是否在witness保存的一个周期内，可以这样理解吗，大部分返回false，6小时与3秒 对吧
+    // 是否在同一个维护期内
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
       if (block.getNum() == 1) { // 等于1 的情况为什么要单单提出来了？更新超级代表，太早了吗，如果=2 也是太早了把
