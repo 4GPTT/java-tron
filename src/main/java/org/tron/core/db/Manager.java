@@ -268,7 +268,7 @@ public class Manager {
     }
   }
 
-  // 涉及到多线程同步？有机会细看下 TODO
+  // 涉及到多线程同步？找时间细看下 TODO
   public synchronized BlockId getHeadBlockId() {
     return new BlockId(
         getDynamicPropertiesStore().getLatestBlockHeaderHash(),
@@ -652,6 +652,7 @@ public class Manager {
     } catch (NonCommonBlockException e) {
       logger.info(
           "there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
+      // 如果获取失败，就是分叉没有公共祖先，直接把新生成的那个分支干掉
       BlockCapsule tmp = newHead;
       while (tmp != null) {
         khaosDb.removeBlk(tmp.getBlockId());
@@ -660,10 +661,12 @@ public class Manager {
 
       throw e;
     }
+    // 先处理已保存在数据库中的那个分支，没有为什么，就是删除
     if (CollectionUtils.isNotEmpty(binaryTree.getValue())) {
       while (!getDynamicPropertiesStore()
           .getLatestBlockHeaderHash()
           .equals(binaryTree.getValue().peekLast().getParentHash())) {
+          // 这里需要再仔细看看 Tocheck
         eraseBlock();
       }
     }
@@ -675,8 +678,9 @@ public class Manager {
         Exception exception = null;
         // todo  process the exception carefully later
         try (ISession tmpSession = revokingStore.buildSession()) {
-          applyBlock(item.getBlk());
-          tmpSession.commit();
+            // 重新处理新建分支的每一个数据块
+            applyBlock(item.getBlk());
+            tmpSession.commit();
         } catch (AccountResourceInsufficientException
             | ValidateSignatureException
             | ContractValidateException
@@ -699,6 +703,7 @@ public class Manager {
             logger.warn("switch back because exception thrown while switching forks. " + exception
                     .getMessage(),
                 exception);
+            // 如果报异常，则回退，这里能正常回退回去吗
             first.forEach(khaosBlock -> khaosDb.removeBlk(khaosBlock.getBlk().getBlockId()));
             khaosDb.setHead(binaryTree.getValue().peekFirst());
 
@@ -745,12 +750,15 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException {
     try (PendingManager pm = new PendingManager(this)) {
 
+      // 如果不是自己产的块
       if (!block.generatedByMyself) {
+        // 块签名验证不通过
         if (!block.validateSignature()) {
           logger.warn("The signature is not validated.");
           throw new BadBlockException("The signature is not validated");
         }
 
+        // 验证交易的默克尔数是否一致
         if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
           logger.warn(
               "The merkle root doesn't match, Calc result is "
@@ -765,18 +773,19 @@ public class Manager {
 
       // DB don't need lower block
       if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
+        // 难道是创世节点吗？不太明白；还是刚收到或生成的第一个块，如果同步的话，会更新这个参数吧？ Tocheck
         if (newBlock.getNum() != 0) {
           return;
         }
       } else {
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
+            //如果收到低序号的块，不继续处理；如果是生成低序号的块，有这个可能吗？
           return;
         }
 
         // switch fork
-        if (!newBlock
-            .getParentHash()
-            .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
+          // 如果生成或收到的块的父块不是 最新已处理完的块，即发生分叉了
+        if (!newBlock.getParentHash().equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
           logger.warn(
               "switch fork! new head num = {}, blockid = {}",
               newBlock.getNum(),
@@ -1040,6 +1049,7 @@ public class Manager {
       TransactionTraceException {
 
     //check that the first block after the maintenance period has just been processed
+    // 这个判断，需要再看看 ？？
     if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
       if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
         logger.info("It's not my turn, "
@@ -1068,6 +1078,7 @@ public class Manager {
     Iterator iterator = pendingTransactions.iterator();
     while (iterator.hasNext()) {
       TransactionCapsule trx = (TransactionCapsule) iterator.next();
+      // 产块时间小于1.125秒
       if (DateTime.now().getMillis() - when
           > ChainConstant.BLOCK_PRODUCED_INTERVAL * 0.5
           * Args.getInstance().getBlockProducedTimeOut()
@@ -1076,6 +1087,7 @@ public class Manager {
         break;
       }
       // check the block size
+      // 块大小 不大于 近2M
       if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3)
           > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
@@ -1084,7 +1096,7 @@ public class Manager {
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
         processTransaction(trx, blockCapsule);
-        tmpSeesion.merge();
+        tmpSeesion.merge(); // 具体干什么的，ToCheck
         // push into block
         blockCapsule.addTransaction(trx);
         iterator.remove();
@@ -1128,6 +1140,7 @@ public class Manager {
 
     session.reset();
 
+    // 有可能是空交易吧 无日志输出
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
@@ -1191,7 +1204,9 @@ public class Manager {
   /**
    * process block.
    */
-  // check  TODO
+  // 看看有哪几种情况会调用这个函数
+  // 1 生成完块，解决完分叉会调用
+  // 2 解决分叉会调用
   public void processBlock(BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
@@ -1200,6 +1215,7 @@ public class Manager {
     // todo set revoking db max size.
 
     // checkWitness
+      // 验证是否为适当的witness出的块
     if (!witnessController.validateWitnessSchedule(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
@@ -1208,17 +1224,20 @@ public class Manager {
       if (block.generatedByMyself) {
         transactionCapsule.setVerified(true);
       }
+      // 验证块中的每一笔交易
       processTransaction(transactionCapsule, block);
     }
 
+    // 是否在witness保存的一个周期内，可以这样理解吗，大部分返回false，6小时与3秒 对吧
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
-      if (block.getNum() == 1) {
+      if (block.getNum() == 1) { // 等于1 的情况为什么要单单提出来了？更新超级代表，太早了吗，如果=2 也是太早了把
         this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
       } else {
         this.processMaintenance(block);
       }
     }
+    // ToDO something check
     this.updateDynamicProperties(block);
     this.updateSignedWitness(block);
     this.updateLatestSolidifiedBlock();

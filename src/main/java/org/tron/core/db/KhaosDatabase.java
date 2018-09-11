@@ -270,6 +270,7 @@ public class KhaosDatabase extends TronDatabase {
   /**
    * Find two block's most recent common parent block.
    */
+  // 获取两个分叉链，从高层到低层，不包含公共的父区块节点
   public Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> getBranch(Sha256Hash block1, Sha256Hash block2)
       throws NonCommonBlockException {
     LinkedList<KhaosBlock> list1 = new LinkedList<>();

@@ -117,6 +117,7 @@ public class WitnessController {
   /**
    * get absolute Slot At Time
    */
+  // 获取绝对块的绝对高度
   public long getAbSlotAtTime(long when) {
     return (when - getGenesisBlock().getTimeStamp()) / ChainConstant.BLOCK_PRODUCED_INTERVAL;
   }
@@ -124,6 +125,7 @@ public class WitnessController {
   /**
    * get slot time.
    */
+  // 根据块高度，获取相对创世块的时间间隔
   public long getSlotTime(long slotNum) {
     if (slotNum == 0) {
       return Time.getCurrentMillis();
@@ -156,12 +158,14 @@ public class WitnessController {
     return validateWitnessSchedule(witnessAddress,timeStamp);
   }
 
+  // 验证是否是当前的witness 产块
   public boolean validateWitnessSchedule(ByteString witnessAddress,long timeStamp) {
 
     //to deal with other condition later
     if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       return true;
     }
+    // 当前块的时间必须大于已收到块的时间
     long blockAbSlot = getAbSlotAtTime(timeStamp);
     long headBlockAbSlot = getAbSlotAtTime(
         manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp());
@@ -170,6 +174,7 @@ public class WitnessController {
       return false;
     }
 
+    // 验证是否为当前witness 产块，如果机器时间不一致，该如何处理 TODO
     long slot = getSlotAtTime(timeStamp);
     final ByteString scheduledWitness = getScheduledWitness(slot);
     if (!scheduledWitness.equals(witnessAddress)) {

@@ -1146,6 +1146,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
 
   public void updateNextMaintenanceTime(long blockTime) {
+    // 6小时
     long maintenanceTimeInterval = getMaintenanceTimeInterval();
 
     long currentMaintenanceTime = getNextMaintenanceTime();
