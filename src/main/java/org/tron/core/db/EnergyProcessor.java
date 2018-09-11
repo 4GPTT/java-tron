@@ -114,6 +114,7 @@ public class EnergyProcessor extends ResourceProcessor {
     }
   }
 
+  // 扣除 通过冻结TRX获取的Energy， 如果不足则失败，返回false
   public boolean useEnergy(AccountCapsule accountCapsule, long energy, long now) {
 
     long energyUsage = accountCapsule.getEnergyUsage();

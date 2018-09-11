@@ -618,6 +618,7 @@ public class Manager {
 
   // 2018-09-10 上午
 
+    // solidity 节点调用该函数
   public void pushVerifiedBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException, ReceiptException,
@@ -742,6 +743,8 @@ public class Manager {
   /**
    * save a block.
    */
+  // witness产完块后，调用该函数
+  // 其他节点收到block时，调用该函数验证
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
@@ -1049,7 +1052,6 @@ public class Manager {
       TransactionTraceException {
 
     //check that the first block after the maintenance period has just been processed
-    // 这个判断，需要再看看 ？？
     if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
       if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
         logger.info("It's not my turn, "

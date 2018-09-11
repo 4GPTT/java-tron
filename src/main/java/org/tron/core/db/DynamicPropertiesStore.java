@@ -1087,7 +1087,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   /**
    * get id of global latest block.
    */
-
   public Sha256Hash getLatestBlockHeaderHash() {
     byte[] blockHash = Optional.ofNullable(getUnchecked(LATEST_BLOCK_HEADER_HASH))
         .map(BytesCapsule::getData)

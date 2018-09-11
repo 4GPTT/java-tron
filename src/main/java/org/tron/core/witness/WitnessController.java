@@ -126,20 +126,24 @@ public class WitnessController {
    * get slot time.
    */
   // 根据块高度，获取相对创世块的时间间隔
+  // ToCheck
   public long getSlotTime(long slotNum) {
     if (slotNum == 0) {
       return Time.getCurrentMillis();
     }
     long interval = ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+    // 如果已保存的仅是创世块时
     if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       return getGenesisBlock().getTimeStamp() + slotNum * interval;
     }
 
+    // 如果在同一个保持期间，+2 ，为什么？
     if (lastHeadBlockIsMaintenance()) {
       slotNum += manager.getSkipSlotInMaintenance();
     }
 
+    // 返回的是时间,而不是相对高度
     long headSlotTime = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
     headSlotTime = headSlotTime
         - ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
@@ -329,12 +333,14 @@ public class WitnessController {
     } else {
       List<ByteString> currentWits = getActiveWitnesses();
 
+      //  获取超级所有超级代码候选人列表
       List<ByteString> newWitnessAddressList = new ArrayList<>();
       witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
         newWitnessAddressList.add(witnessCapsule.getAddress());
       });
 
       countWitness.forEach((address, voteCount) -> {
+        // 判断地址是否有效
         final WitnessCapsule witnessCapsule = witnessStore
             .get(StringUtil.createDbKey(address));
         if (null == witnessCapsule) {
@@ -343,6 +349,7 @@ public class WitnessController {
           return;
         }
 
+        // 更新有变动超级代表候选人的选票
         AccountCapsule witnessAccountCapsule = accountStore
             .get(StringUtil.createDbKey(address));
         if (witnessAccountCapsule == null) {
