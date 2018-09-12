@@ -69,6 +69,7 @@ public class VM {
 
     long energyCost = 0;
 
+    // 判断消耗内存大小是否超过3M
     checkMemorySize(op, newMemSize);
 
     // memory drop consume calc

@@ -92,6 +92,7 @@ public class WitnessController {
   /**
    * get slot at time.
    */
+  // 获取下一个块的高度 ？？
   public long getSlotAtTime(long when) {
     long firstSlotTime = getSlotTime(1);
     if (when < firstSlotTime) {
@@ -125,7 +126,7 @@ public class WitnessController {
   /**
    * get slot time.
    */
-  // 根据块高度，获取相对创世块的时间间隔
+  // 获取跟已收到最新块 差指定块的 时间戳  ？？
   // ToCheck
   public long getSlotTime(long slotNum) {
     if (slotNum == 0) {
@@ -145,8 +146,7 @@ public class WitnessController {
 
     // 返回的是时间,而不是相对高度
     long headSlotTime = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
-    headSlotTime = headSlotTime
-        - ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
+    headSlotTime = headSlotTime  - ((headSlotTime - getGenesisBlock().getTimeStamp()) % interval);
 
     return headSlotTime + interval * slotNum;
   }

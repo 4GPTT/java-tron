@@ -146,6 +146,7 @@ public class WitnessService implements Service {
     }
     long now = DateTime.now().getMillis() + 50L;
     if (this.needSyncCheck) {
+      // 根据getSlotTime 函数，如果在保持期，witness会不会sleep过去 ？？
       long nexSlotTime = controller.getSlotTime(1);
       if (nexSlotTime > now) { // check sync during first loop
         needSyncCheck = false;
