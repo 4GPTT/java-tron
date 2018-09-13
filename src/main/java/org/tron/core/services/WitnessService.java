@@ -163,6 +163,7 @@ public class WitnessService implements Service {
       }
     }
 
+    // 如果参与率不足，则放弃产块；感觉意义不大
     final int participation = this.controller.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
       logger.warn(
@@ -198,6 +199,7 @@ public class WitnessService implements Service {
       return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
     }
 
+    // 验证当前生成块的是否为激活的witness
     if (!controller.activeWitnessesContain(this.getLocalWitnessStateMap().keySet())) {
       logger.info("Unelected. Elected Witnesses: {}",
           StringUtil.getAddressStringList(controller.getActiveWitnesses()));
@@ -206,6 +208,7 @@ public class WitnessService implements Service {
 
     final ByteString scheduledWitness = controller.getScheduledWitness(slot);
 
+    // 当前slot是否是当前witness 生产
     if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
       logger.info("It's not my turn, ScheduledWitness[{}],slot[{}],abSlot[{}],",
           ByteArray.toHexString(scheduledWitness.toByteArray()), slot,

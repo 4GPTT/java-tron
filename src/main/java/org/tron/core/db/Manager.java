@@ -853,6 +853,7 @@ public class Manager {
     if (block.getNum() != 1) {
       slot = witnessController.getSlotAtTime(block.getTimeStamp());
     }
+    // 判断之前是否有witness丢块，如果丢的话，把丢的块计入丢块数，并设置不活跃状态
     for (int i = 1; i < slot; ++i) {
       if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
         WitnessCapsule w =
@@ -865,6 +866,8 @@ public class Manager {
       }
       this.dynamicPropertiesStore.applyBlock(false);
     }
+
+    // 设置生成当前块的witness为活跃状态
     this.dynamicPropertiesStore.applyBlock(true);
 
     if (slot <= 0) {

@@ -1012,6 +1012,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     int blockFilledSlotsIndex = getBlockFilledSlotsIndex();
     blockFilledSlots[blockFilledSlotsIndex] = fillBlock ? 1 : 0;
     saveBlockFilledSlotsIndex((blockFilledSlotsIndex + 1) % getBlockFilledSlotsNumber());
+    // 这个参数没什么意义，默认值都是1，只有前27个block丢块的时候设置，对吧
     saveBlockFilledSlots(blockFilledSlots);
   }
 
