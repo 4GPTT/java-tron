@@ -186,9 +186,18 @@ public class TransactionTrace {
         dbManager.getWitnessController().getHeadSlot());
   }
 
-  // 验证处理的结果是否一致
+  public boolean checkNeedRetry() {
+    if (!needVM()) {
+      return false;
+    }
+    if (!trx.getContractRet().equals(contractResult.OUT_OF_TIME)
+        && receipt.getResult().equals(contractResult.OUT_OF_TIME)) {
+      return true;
+    }
+    return false;
+  }
+
   public void check() throws ReceiptCheckErrException {
-    // 普通合约才验证 ？
     if (!needVM()) {
       return;
     }
@@ -196,8 +205,9 @@ public class TransactionTrace {
       throw new ReceiptCheckErrException("null resultCode");
     }
     if (!trx.getContractRet().equals(receipt.getResult())) {
-      logger.info("this tx resultCode in received block: {}", trx.getContractRet());
-      logger.info("this tx resultCode in self: {}", receipt.getResult());
+      logger.info(
+          "this tx resultCode in received block: {}\nthis tx resultCode in self: {}",
+          trx.getContractRet(), receipt.getResult());
       throw new ReceiptCheckErrException("Different resultCode");
     }
   }
