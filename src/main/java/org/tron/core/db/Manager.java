@@ -534,7 +534,7 @@ public class Manager {
       throw new TooBigTransactionException(
           "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
     }
-    // 这个参数是交易处理的时间？ 必须大于当前块时间戳，小于 24h
+    // 这个参数是交易处理的截止时间，必须大于当前块时间戳，小于 24h
     long transactionExpiration = transactionCapsule.getExpiration();
     long headBlockTime = getHeadBlockTimeStamp();
     if (transactionExpiration <= headBlockTime ||

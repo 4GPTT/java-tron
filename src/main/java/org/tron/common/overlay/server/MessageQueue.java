@@ -104,8 +104,10 @@ public class MessageQueue {
 
   public void receivedMessage(Message msg) {
     logger.info("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
+    // 统计消息个数
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
     MessageRoundtrip messageRoundtrip = requestQueue.peek();
+    // 如果是answerMessage，直接删除
     if (messageRoundtrip != null && messageRoundtrip.getMsg().getAnswerMessage() == msg
         .getClass()) {
       requestQueue.remove();

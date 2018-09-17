@@ -8,6 +8,7 @@ import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionsMessage;
 
+// 真的只是统计啊
 @Slf4j
 public class MessageStatistics {
 

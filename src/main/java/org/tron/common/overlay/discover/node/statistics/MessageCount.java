@@ -2,6 +2,7 @@ package org.tron.common.overlay.discover.node.statistics;
 
 import lombok.extern.slf4j.Slf4j;
 
+// 统计60秒内收到数据包的个数和总个数
 @Slf4j
 public class MessageCount {
 

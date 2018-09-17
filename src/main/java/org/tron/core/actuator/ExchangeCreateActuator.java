@@ -17,6 +17,14 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ExchangeCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+//message ExchangeCreateContract {
+//        bytes owner_address = 1;
+//        bytes first_token_id = 2;
+//        int64 first_token_balance = 3;
+//        bytes second_token_id = 4;
+//        int64 second_token_balance = 5;
+//        }
+
 @Slf4j
 public class ExchangeCreateActuator extends AbstractActuator {
 
@@ -39,7 +47,6 @@ public class ExchangeCreateActuator extends AbstractActuator {
       long secondTokenBalance = exchangeCreateContract.getSecondTokenBalance();
 
       long newBalance = accountCapsule.getBalance() - fee;
-
       accountCapsule.setBalance(newBalance);
 
       if (Arrays.equals(firstTokenID, "_".getBytes())) {
@@ -119,6 +126,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
     AccountCapsule accountCapsule = this.dbManager.getAccountStore().get(ownerAddress);
 
+    // 账户余额是否足够扣除费用
     if (accountCapsule.getBalance() < calcFee()) {
       throw new ContractValidateException("No enough balance for exchange create fee!");
     }
