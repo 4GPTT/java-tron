@@ -59,6 +59,7 @@ public class PeerConnection extends Channel {
 
   private Map<Sha256Hash, Long> advObjWeSpread = new ConcurrentHashMap<>();
 
+  // 收到的Item 跟时间的map
   private Map<Item, Long> advObjWeRequested = new ConcurrentHashMap<>();
 
   private boolean advInhibit = false;
@@ -80,14 +81,18 @@ public class PeerConnection extends Channel {
   }
 
   //sync chain
+  // 这个应该是和对端都有的 最高的block的Id吧
   private BlockId headBlockWeBothHave = new BlockId();
 
   private long headBlockTimeWeBothHave;
 
+  // 暂时理解为一组BlockID吧， 发送请求，等待数据的block Id 列表？ 还是就是需要同步的blockId列表？感觉是后者
   private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();
 
+  // 保存从指定peer收到的block 和 系统时间的对应关系
   private Map<BlockId, Long> syncBlockRequested = new ConcurrentHashMap<>();
 
+  // 已向对端请求，等待多个块相应的块列表，请求一次，这个更新一次。
   private Pair<Deque<BlockId>, Long> syncChainRequested = null;
 
   public Pair<Deque<BlockId>, Long> getSyncChainRequested() {
@@ -135,6 +140,7 @@ public class PeerConnection extends Channel {
 
   private boolean banned;
 
+  // 正在被处理的block id 列表
   private Set<BlockId> blockInProc = new HashSet<>();
 
   public Map<Item, Long> getAdvObjWeRequested() {

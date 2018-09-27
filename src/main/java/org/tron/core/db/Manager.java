@@ -139,6 +139,7 @@ public class Manager {
 
 
   private BlockCapsule genesisBlock;
+  // 这个参数的大小代表什么意义？？？
   @Getter
   @Autowired
   private RevokingDatabase revokingStore;
@@ -882,6 +883,7 @@ public class Manager {
   /**
    * Get the fork branch.
    */
+  // 获取分叉节点的BlockId list，前面的是高层块，后面的是低层块
   public LinkedList<BlockId> getBlockChainHashesOnFork(final BlockId forkBlockHash)
       throws NonCommonBlockException {
     final Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> branch =
@@ -921,6 +923,7 @@ public class Manager {
     }
   }
 
+  // 判断数据库中是否存在指定的block ？
   public boolean containBlockInMainChain(BlockId blockId) {
     try {
       return blockStore.get(blockId.getBytes()) != null;
@@ -1301,6 +1304,7 @@ public class Manager {
     }
   }
 
+  // 这里减去 revokingStore.size()， 是缓存未处理完的block ？
   public long getSyncBeginNumber() {
     logger.info("headNumber:" + dynamicPropertiesStore.getLatestBlockHeaderNumber());
     logger.info(

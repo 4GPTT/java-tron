@@ -24,7 +24,9 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) {
+    // 统计消息
     msgQueue.receivedMessage(msg);
+    // 真正的处理消息
     peerDel.onMessage(peer, msg);
   }
 

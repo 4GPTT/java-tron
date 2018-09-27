@@ -199,6 +199,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           new ThreadFactoryBuilder()
               .setNameFormat("TrxsHandlePool-%d").build());
 
+  // 只能缓存200个，超过则从头部删除，再添加
   private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
     @Override
     public boolean offer(BlockId blockId) {
@@ -323,7 +324,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     if (msg instanceof BlockMessage) {
       logger.info("Ready to broadcast block {}", ((BlockMessage) msg).getBlockId());
       freshBlockId.offer(((BlockMessage) msg).getBlockId());
-      BlockCache.put(msg.getMessageId(), (BlockMessage) msg);
+      BlockCache.put(msg.getMessageId(), (BlockMessage) msg);  // 最多缓存10个
       type = InventoryType.BLOCK;
     } else if (msg instanceof TransactionMessage) {
       TrxCache.put(msg.getMessageId(), (TransactionMessage) msg);
@@ -534,12 +535,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
       blockWaitToProc.forEach((msg, peerConnection) -> {
 
+          // 如果对端断连，则返回
         if (peerConnection.isDisconnect()) {
           logger.error("Peer {} is disconnect, drop block {}", peerConnection.getNode().getHost(),
               msg.getBlockId().getString());
           blockWaitToProc.remove(msg);
           syncBlockIdWeRequested.invalidate(msg.getBlockId());
           isFetchSyncActive = true;
+          // 这里直接返回了，而不是继续处理其他的msg ToCheck
           return;
         }
 
@@ -547,7 +550,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           final boolean[] isFound = {false};
           getActivePeer().stream()
               .filter(
-                  peer -> !peer.getSyncBlockToFetch().isEmpty() && peer.getSyncBlockToFetch().peek()
+                  peer -> !peer.getSyncBlockToFetch().isEmpty() && peer.getSyncBlockToFetch().peek() //BlockId在主动请求列表中
                       .equals(msg.getBlockId()))
               .forEach(peer -> {
                 peer.getSyncBlockToFetch().pop();
@@ -682,13 +685,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     logger.info("wait end");
   }
 
+  // 收到的是block
   private void onHandleBlockMessage(PeerConnection peer, BlockMessage blkMsg) {
     Map<Item, Long> advObjWeRequested = peer.getAdvObjWeRequested();
     Map<BlockId, Long> syncBlockRequested = peer.getSyncBlockRequested();
     BlockId blockId = blkMsg.getBlockId();
     Item item = new Item(blockId, InventoryType.BLOCK);
     boolean syncFlag = false;
+    // 如果这个block 信息是我们期望的去请求的，则请求
     if (syncBlockRequested.containsKey(blockId)) {
+        // 从已经断连的peer收到重复的block 信息，忽略之...
       if (!peer.getSyncFlag()) {
         logger.info("Received a block {} from no need sync peer {}", blockId.getNum(),
             peer.getNode().getHost());
@@ -701,18 +707,23 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       isHandleSyncBlockActive = true;
       syncFlag = true;
       if (!peer.isBusy()) {
+          // 空闲中，有未同步的块，且小于2000，就去同步block
         if (peer.getUnfetchSyncNum() > 0
             && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
           syncNextBatchChainIds(peer);
         } else {
+            // 置状态，
           isFetchSyncActive = true;
         }
       }
     }
+
+    // 如果这个块我们已经请求到了
     if (advObjWeRequested.containsKey(item)) {
       advObjWeRequested.remove(item);
       if (!syncFlag) {
         processAdvBlock(peer, blkMsg.getBlockCapsule());
+        // 空函数
         startFetchItem();
       }
     }
@@ -799,6 +810,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           && peer.getBlockInProc().isEmpty()
           && !peer.isNeedSyncFromPeer()
           && !peer.isNeedSyncFromUs()) {
+
         startSyncWithPeer(peer);
       } else if (peer.getBlockInProc().remove(block.getBlockId())) {
         updateBlockWeBothHave(peer, block);
@@ -1130,6 +1142,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           blockIdWeGet.poll();
         }
 
+        // 更新未同步的block的数量 ToCheck
         peer.setUnfetchSyncNum(msg.getRemainNum());
         peer.getSyncBlockToFetch().addAll(blockIdWeGet);
         synchronized (freshBlockId) {

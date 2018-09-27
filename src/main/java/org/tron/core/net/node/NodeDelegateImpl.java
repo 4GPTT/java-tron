@@ -58,16 +58,20 @@ public class NodeDelegateImpl implements NodeDelegate {
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
       throws BadBlockException, UnLinkedBlockException, InterruptedException, NonCommonBlockException {
 
+      // 块的大小不超过近2M
     if (block.getInstance().getSerializedSize() > BLOCK_SIZE + 100) {
       throw new BadBlockException("block size over limit");
     }
 
+    // 和当前时间间隔3秒内，什么情况，这么苛刻
     long gap = block.getTimeStamp() - System.currentTimeMillis();
     if (gap >= BLOCK_PRODUCED_INTERVAL) {
       throw new BadBlockException("block time error");
     }
     try {
+        // 验证每笔交易的签名
       dbManager.preValidateTransactionSign(block);
+      // 处理block
       dbManager.pushBlock(block);
       if (!syncMode) {
         List<TransactionCapsule> trx = null;
@@ -208,6 +212,8 @@ public class NodeDelegateImpl implements NodeDelegate {
   }
 
   @Override
+  // 这个函数有点难，再细看 TODO
+  // beginBlockId 两端都有的最最高节点，just guess ？
   public Deque<BlockId> getBlockChainSummary(BlockId beginBlockId, Deque<BlockId> blockIdsToFetch)
       throws TronException {
 
@@ -215,24 +221,29 @@ public class NodeDelegateImpl implements NodeDelegate {
     List<BlockId> blockIds = new ArrayList<>(blockIdsToFetch);
     long highBlkNum;
     long highNoForkBlkNum;
-    long syncBeginNumber = dbManager.getSyncBeginNumber();
+    long syncBeginNumber = dbManager.getSyncBeginNumber();  // 本地认为固化最高block的高度
     long lowBlkNum = syncBeginNumber < 0 ? 0 : syncBeginNumber;
 
     LinkedList<BlockId> forkList = new LinkedList<>();
 
+    // 如果beginBlockId 不是非创世节点的ID
     if (!beginBlockId.equals(getGenesisBlock().getBlockId())) {
+
+        // 如果本地数据库中有这个节点
       if (containBlockInMainChain(beginBlockId)) {
         highBlkNum = beginBlockId.getNum();
+        // 这里已经判断beginBlockId ！= getGenesisBlock().getBlockId()，还做=0的判断，多余吗？？
         if (highBlkNum == 0) {
           throw new TronException(
               "This block don't equal my genesis block hash, but it is in my DB, the block id is :"
                   + beginBlockId.getString());
         }
         highNoForkBlkNum = highBlkNum;
-        if (beginBlockId.getNum() < lowBlkNum) {
+        if (beginBlockId.getNum() < lowBlkNum) {  // 对端的block高度比我低的情况
           lowBlkNum = beginBlockId.getNum();
         }
       } else {
+          // 中间缺节点
         forkList = dbManager.getBlockChainHashesOnFork(beginBlockId);
         if (forkList.isEmpty()) {
           throw new UnLinkedBlockException(
@@ -243,6 +254,7 @@ public class NodeDelegateImpl implements NodeDelegate {
         highNoForkBlkNum = forkList.peekLast().getNum();
         forkList.pollLast();
         Collections.reverse(forkList);
+
         highBlkNum = highNoForkBlkNum + forkList.size();
         if (highNoForkBlkNum < lowBlkNum) {
           throw new UnLinkedBlockException(
@@ -252,9 +264,9 @@ public class NodeDelegateImpl implements NodeDelegate {
         }
       }
     } else {
+        // beginBlockId.getNum() == 0 的情况
       highBlkNum = dbManager.getHeadBlockNum();
       highNoForkBlkNum = highBlkNum;
-
     }
 
     if (!blockIds.isEmpty() && highBlkNum != blockIds.get(0).getNum() - 1) {

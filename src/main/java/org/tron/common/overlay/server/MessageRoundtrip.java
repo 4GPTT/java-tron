@@ -62,6 +62,7 @@ public class MessageRoundtrip {
     return lastTimestamp;
   }
 
+  // 如果大于20 秒，则可以再次尝试
   public boolean hasToRetry() {
     return 20000 < System.currentTimeMillis() - lastTimestamp;
   }

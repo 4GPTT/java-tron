@@ -88,6 +88,7 @@ public class MessageQueue {
   }
 
   public boolean sendMessage(Message msg) {
+    // 发送间隔小于10s，则忽略这次发送
     if (msg instanceof PingMessage && sendTime > System.currentTimeMillis() - 10_000) {
       return false;
     }
@@ -97,6 +98,7 @@ public class MessageQueue {
     if (msg.getAnswerMessage() != null) {
       requestQueue.add(new MessageRoundtrip(msg));
     } else {
+      // 这里没考虑插入不成功的情况啊，是在哪里处理了吗？
       msgQueue.offer(msg);
     }
     return true;
@@ -107,7 +109,7 @@ public class MessageQueue {
     // 统计消息个数
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
     MessageRoundtrip messageRoundtrip = requestQueue.peek();
-    // 如果是answerMessage，直接删除
+    // 这里一定可以确认peek 出来的message 跟收到的meg 配对吗？ ？
     if (messageRoundtrip != null && messageRoundtrip.getMsg().getAnswerMessage() == msg
         .getClass()) {
       requestQueue.remove();
@@ -138,6 +140,7 @@ public class MessageQueue {
     if (messageRoundtrip.getRetryTimes() > 0 && !messageRoundtrip.hasToRetry()) {
       return;
     }
+    // 如果已经尝试过，以PING 超时原因结束
     if (messageRoundtrip.getRetryTimes() > 0) {
       channel.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.PING_TIMEOUT);
       logger
@@ -147,6 +150,7 @@ public class MessageQueue {
       return;
     }
 
+    // 发送数据
     Message msg = messageRoundtrip.getMsg();
 
     ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
