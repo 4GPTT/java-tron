@@ -103,7 +103,7 @@ public class VM {
           energyCost = energyCosts.getSUICIDE();
           DataWord suicideAddressWord = stack.get(stack.size() - 1);
           if (isDeadAccount(program, suicideAddressWord) &&
-              !program.getBalance(program.getOwnerAddress()).isZero()) {
+              !program.getBalance(program.getContractAddress()).isZero()) {
             energyCost += energyCosts.getNEW_ACCT_SUICIDE();
           }
           break;
@@ -621,7 +621,7 @@ public class VM {
          * Environmental Information
          */
         case ADDRESS: {
-          DataWord address = program.getOwnerAddress();
+          DataWord address = program.getContractAddress();
 
           if (logger.isDebugEnabled()) {
             hint = "address: " + Hex.toHexString(address.getLast20Bytes());
@@ -952,7 +952,7 @@ public class VM {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
-          DataWord address = program.getOwnerAddress();
+          DataWord address = program.getContractAddress();
 
           DataWord memStart = stack.pop();
           DataWord memOffset = stack.pop();
@@ -1035,7 +1035,7 @@ public class VM {
           DataWord value = program.stackPop();
 
           if (logger.isDebugEnabled()) {
-            hint = "[" + program.getOwnerAddress().toPrefixString() + "] key: " + addr + " value: "
+            hint = "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + " value: "
                 + value;
           }
 
@@ -1256,7 +1256,7 @@ public class VM {
           program.getResult().addTouchAccount(address.getLast20Bytes());
 
           if (logger.isDebugEnabled()) {
-            hint = "address: " + Hex.toHexString(program.getOwnerAddress().getLast20Bytes());
+            hint = "address: " + Hex.toHexString(program.getContractAddress().getLast20Bytes());
           }
 
           program.stop();
